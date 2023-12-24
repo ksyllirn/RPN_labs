@@ -1,45 +1,65 @@
-﻿namespace RPNCalc
+﻿using System.Linq.Expressions;
+
+namespace RPNCalc
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             Console.Write("Input mathematical statement: ");
             string statement = Console.ReadLine();
-            List<object> parsedStatement = Parse(statement);
 
-            List<object> rpn = ConvertToRPN(parsedStatement);
+            List<Token> parsedStatement = Parse(statement);
+
+            List<Token> rpn = ConvertToRPN(parsedStatement);
             Console.WriteLine($"Reversed Polish Notation: {string.Join(" ", rpn)}");
 
-            float result = Calculate(rpn);
-            Console.WriteLine($"Result: {result}");
+            double result = Calculate(rpn);
 
             Console.ReadLine();
         }
 
-        static List<object> Parse(string statement)
+        static List<Token> Parse(string statement)
         {
-            List<object> result = new List<object>();
+            List<Token> result = new();
             string number = "";
 
             foreach (char token in statement)
             {
-                if (token != ' ')
+                if (char.IsDigit(token) || token == ',')
                 {
-                    if (!char.IsDigit(token))
+                    number += token;
+                }
+                else
+                {
+                    if (number != "")
                     {
-                        if (number != "") result.Add(number);
-                        result.Add(token);
+                        Number num = new() { value = double.Parse(number) };
+                        result.Add(num);
                         number = "";
                     }
-                    else
+                    if (token == '+' || token == '-' || token == '*' || token == '/')
                     {
-                        number += token;
+                        Operation op = new() { symbol = token };
+                        result.Add(op);
+                    }
+                    else if (token == '(' || token == ')')
+                    {
+                        Parenthesis bracket = new();
+                        if (token == '(')
+                        {
+                            bracket.opening = true;
+                        }
+                        result.Add(bracket);
                     }
                 }
             }
 
-            if (number != "") result.Add(number);
+            if (number != "") 
+            {
+                Number num = new() { value = double.Parse(number) };
+                result.Add(num);
+            }
 
             return result;
         }
