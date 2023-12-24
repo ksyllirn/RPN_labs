@@ -12,11 +12,11 @@ namespace RPNCalc
             List<Token> parsedStatement = Parse(statement);
 
             List<Token> rpn = ConvertToRPN(parsedStatement);
-            Console.WriteLine($"Reversed Polish Notation: {string.Join(" ", rpn)}");
 
             double result = Calculate(rpn);
+            Console.WriteLine($"Result: {result}");
 
-            Console.ReadLine();
+        Console.ReadLine();
         }
 
         static List<Token> Parse(string statement)
@@ -90,36 +90,39 @@ namespace RPNCalc
             }
         }
 
-        static List<object> ConvertToRPN(List<object> statement)
+        static List<Token> ConvertToRPN(List<Token> statement)
         {
-            Stack<object> operations = new Stack<object>();
-            List<object> result = new List<object>();
+            Stack<Token> operations = new();
+            List<Token> result = new();
 
-            foreach (object token in statement)
+            foreach (Token token in statement)
             {
-                if (token is string)
+                if (token is Number number)
                 {
-                    result.Add(token);
+                    result.Add(number);
                 }
-                else if (token.Equals('+') || token.Equals('-') || token.Equals('*') || token.Equals('/'))
+                else if (token is Operation operation)
                 {
                     while (operations.Count > 0 && GetPriority(operations.Peek()) >= GetPriority(token))
                     {
                         result.Add(operations.Pop());
                     }
-                    operations.Push(token);
+                    operations.Push(operation);
                 }
-                else if (token.Equals('('))
+                else if (token is Parenthesis bracket)
                 {
-                    operations.Push(token);
-                }
-                else if (token.Equals(')'))
-                {
-                    while (operations.Count > 0 && !operations.Peek().Equals('('))
+                    if (bracket.opening)
                     {
-                        result.Add(operations.Pop());
+                        operations.Push(bracket);
                     }
-                    operations.Pop();
+                    else
+                    {
+                        while (operations.Count > 0 && operations.Peek() is not Parenthesis)
+                        {
+                            result.Add(operations.Pop());
+                        }
+                        operations.Pop();
+                    }
                 }
             }
 
@@ -130,22 +133,26 @@ namespace RPNCalc
 
             return result;
         }
-        static float Calculate(List<object> StateInRPN)
+        static double Calculate(List<Token> rpn)
         {
-            for (int i = 0; i < StateInRPN.Count; i++)
+            Stack<double> numbers = new();
+
+            foreach (Token token in rpn)
             {
-                if (StateInRPN[i] is char)
+                if (token is Number number)
                 {
-                    float firstNumber = Convert.ToSingle(StateInRPN[i - 2]);
-                    float secondNumber = Convert.ToSingle(StateInRPN[i - 1]);
-                    float result = CalculateOperation(StateInRPN[i], firstNumber, secondNumber);
-                    StateInRPN.RemoveRange(i - 2, 3);
-                    StateInRPN.Insert(i - 2, result);
-                    i -= 2;
+                    numbers.Push(number.value);
+                }
+                else if (token is Operation operation)
+                {
+                    double secondNum = numbers.Pop();
+                    double firstNum = numbers.Pop();
+                    char op = operation.symbol;
+                    double resultedNum = CalculateOperation(op, firstNum, secondNum);
+                    numbers.Push(resultedNum);
                 }
             }
-            float CalculatedStatement = Convert.ToSingle(StateInRPN[0]);
-            return CalculatedStatement;
+            return numbers.Pop();
         }
     }
 }
