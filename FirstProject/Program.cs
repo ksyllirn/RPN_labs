@@ -64,21 +64,17 @@ namespace RPNCalc
             return result;
         }
 
-        static int GetPriority(Token operation)
+        static int GetPriority(object operation)
         {
-            if (operation is Operation op)
+            switch (operation)
             {
-                switch (op.symbol)
-                {
-                    case '+': case '-': return 1;
-                    case '*': case '/': return 2;
-                    default: return 0;
-                }
+                case '+': case '-': return 1;
+                case '*': case '/': return 2;
+                default: return 0;
             }
-            return 0;
         }
 
-        static double CalculateOperation(object operation, double firstNum, double secondNum)
+        static float CalculateOperation(object operation, float firstNum, float secondNum)
         {
             switch (operation)
             {
